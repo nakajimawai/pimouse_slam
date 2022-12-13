@@ -54,6 +54,22 @@ class Motor():
 	q = tf.transformations.quaternion_from_euler(0, 0, self.th)
 	self.bc_odom.sendTransform((self.x, self.y,0.0), q, self.cur_time, "base_link", "odom")
 
+	odom = Odometry()
+	odom.header.stamp = self.cur_time
+	odom.header.frame_id = "odom"
+	odom.child_frame_id = "base_link"
+
+	odom.pose.pose.position = Point(self.x,self.y,0)
+	odom.pose.pose.orientation = Quaternion(*q)
+
+	odom.twist.twist.linear.x = self.vx
+	odom.twist.twist.linear.y = 0.0
+	odom.twist.twist.angular.z = self.vth
+
+	#print("vth:")
+	#print(self.vth)
+	self.pub_odom.publish(odom)
+
 	self.last_time = self.cur_time
 
     def set_power(self,onoff=False):
@@ -81,7 +97,7 @@ class Motor():
 		rf.write(str(int(round(right_hz))) + "\n")
                 motor_hz[0] = left_hz
                 motor_hz[1] = right_hz
-		print("set_success")
+		#print("set_success")
 		self.count+=1
 	except:
 	    rospy.logerr("cannot write to rtmotor_raw_*")
@@ -103,7 +119,7 @@ class Motor():
 	if not self.is_on:
 	    return
 	self.vx = message.linear.x
-	self.vth = message.linear.z
+	self.vth = message.angular.z
 
         forward_hz = 80000.0*message.linear.x/(9*math.pi)
 	rot_hz = 400.0*message.angular.z/math.pi
