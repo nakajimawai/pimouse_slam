@@ -33,6 +33,29 @@ class Motor():
 	self.count = 0
 	self.using_cmd_vel = False
 
+	###add for pimouse_slam
+	self.pub_odom = rospy.Publisher('odom', Odometry, queue_size=10)
+	self.bc_odom = tf.TransformBroadcaster()
+
+	self.x, self.y, self.th = 0.0, 0.0, 0.0
+	self.vx, self.vth = 0.0, 0.0
+
+	self.cur_time = rospy.Time.now()
+	self.last_time = self.cur_time
+
+    def send_odom(self):
+	self.cur_time = rospy.Time.now()
+
+	dt = self.cur_time.to_sec() - self.last_time.to_sec()
+	self.x += self.vx * math.cos(self.th) * dt
+	self.y += self.vx * math.sin(self.th) * dt
+	self.th += self.vth * dt
+
+	q = tf.transformations.quaternion_from_euler(0, 0, self.th)
+	self.bc_odom.sendTransform((self.x, self.y,0.0), q, self.cur_time, "base_link", "odom")
+
+	self.last_time = self.cur_time
+
     def set_power(self,onoff=False):
 	en="/dev/rtmotoren0"
 	try:
@@ -77,6 +100,11 @@ class Motor():
 	self.set_raw_freq(message.left_hz,message.right_hz)
 
     def callback_cmd_vel(self,message):
+	if not self.is_on:
+	    return
+	self.vx = message.linear.x
+	self.vth = message.linear.z
+
         forward_hz = 80000.0*message.linear.x/(9*math.pi)
 	rot_hz = 400.0*message.angular.z/math.pi
 	self.set_raw_freq(forward_hz-rot_hz, forward_hz+rot_hz)
