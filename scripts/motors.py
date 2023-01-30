@@ -25,7 +25,7 @@ class Motor():
         self.pub_odom = rospy.Publisher('odom', Odometry, queue_size=10)
         self.bc_odom = tf.TransformBroadcaster()
 
-        self.x, self.y, self.th = 0.0, 0.0, 0.0
+        self.x, self.y, self.th = 0.0, 0.0, 3.14
         self.vx, self.vth = 0.0, 0.0
 
         self.cur_time = rospy.Time.now()
@@ -89,7 +89,7 @@ class Motor():
     def callback_cmd_vel(self,message):
         if not self.is_on:
             return
-        self.vx = message.linear.x
+        self.vx = -message.linear.x
         self.vth = message.angular.z
 
         forward_hz = 80000.0*message.linear.x/(9*math.pi)

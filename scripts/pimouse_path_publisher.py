@@ -31,7 +31,7 @@ class Simple_path_simulator():
         self.path.header = self.path_header
 
         #get pose data from csv
-        self.csv_path_data = pd.read_csv("pimouse_path_data.csv")
+        self.csv_path_data = pd.read_csv("pimouse_path_data_0130_2.csv")
         pose_list = self.get_poses_from_csvdata()
         self.path.poses =pose_list
 

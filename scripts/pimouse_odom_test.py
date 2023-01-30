@@ -63,6 +63,9 @@ class Motor():
         self.odom_broadcaster = tf.TransformBroadcaster()
         self.map_broadcaster = tf.TransformBroadcaster()
 
+        #set callback for ctrl and c
+        signal.signal(signal.SIGINT, self.ctr_c_interruption)
+
         if self.save_path_as_csv == True:
             self.path_dict = {}
 
@@ -167,7 +170,7 @@ class Motor():
         # Save CSV path file
         cols = ["time", "x", "y", "z", "w0", "w1", "w2", "w3", "vx", "vy", "vz", "roll", "pitch", "yaw"]
         df = pd.DataFrame.from_dict(self.path_dict, orient='index',columns=cols)
-        df.to_csv("pimouse_path_data.csv", index=False)
+        df.to_csv("pimouse_path_data_0130_2.csv", index=False)
 
 
     def set_power(self,onoff=False):
@@ -203,8 +206,8 @@ class Motor():
             return
         #self.cmdvel = message.linear.x
         #self.vth = message.angular.z
-        self.cmdvel_linear_x =message.linear.x
-        self.cmdvel_linear_y =message.linear.x
+        self.cmdvel_linear_x =-message.linear.x*2
+        self.cmdvel_linear_y =-message.linear.x*2
         self.cmdvel_angular_z =message.angular.z
 
 
@@ -237,9 +240,19 @@ class Motor():
 
         return True
 
+
+    #######################
+    # ctrl and c callabck #
+    #######################
+    def ctr_c_interruption(self, signum, frame):
+        self.save_csv()
+        print("finish")
+	sys.exit()
+
 if __name__ == '__main__':
     rospy.init_node('motors')
     m = Motor()
+    m.save_csv()
 
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
